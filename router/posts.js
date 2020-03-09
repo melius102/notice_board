@@ -1,6 +1,7 @@
 const express = require("express");
 const dateTime = require('date-time');
 const { pool, sqlAction } = require('../modules/mysql-conn');
+const { upload } = require('../modules/multer-conn');
 const { clog } = require('../modules/util');
 
 const router = express.Router();
@@ -84,14 +85,31 @@ router.get("/delete/:id", async (req, res) => {
 });
 
 // CREATE
-router.post("/", async (req, res) => {
+// upload.any()
+// upload.single(fieldname) : fieldname of formdata
+router.post("/", upload.single("upfile"), async (req, res) => {
+    var contentType = req.headers['content-type'].split(';')[0];
+    clog('contentType', contentType);
     let { writer, title, content } = req.body;
+    let sql, sqlVals, result;
     try {
-        // let sql = 'INSERT INTO users SET id=?, data=?, createdAt=now()';
-        let sql = 'INSERT INTO posts SET writer=?, title=?, content=?, createdAt=?';
-        let sqlVals = [writer, title, content, new Date()];
-        const result = await sqlAction(pool, sql, sqlVals);
-        // res.json(result[0]);
+        // sql = 'INSERT INTO users SET id=?, data=?, createdAt=now()';
+        sql = 'INSERT INTO posts SET writer=?, title=?, content=?, createdAt=?';
+        sqlVals = [writer, title, content, new Date()];
+        result = await sqlAction(pool, sql, sqlVals);
+        if (contentType == 'application/x-www-form-urlencoded') { // formdata without enctype
+        } else if (contentType == 'multipart/form-data') { // formdata with enctype='multipart/form-data'
+            // need to improve, insert and select must be performed simultaneously.
+            sql = 'SELECT id FROM posts ORDER BY id DESC LIMIT 1';
+            sqlVals = [];
+            result = await sqlAction(pool, sql, sqlVals);
+
+            let file = req.file;
+            let postid = result[0][0].id
+            sql = 'INSERT INTO files SET postid=?, filename=?, originalname=?';
+            sqlVals = [postid, file.filename, file.originalname];
+            result = await sqlAction(pool, sql, sqlVals);
+        }
         res.redirect('/posts');
     } catch (err) {
         clog(err);
