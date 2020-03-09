@@ -31,8 +31,8 @@ function viewOne(res) {
 }
 
 function viewAll(res) {
-    var html = '<table>';
-    for (var v of res) {
+    let html = '<table>';
+    for (let v of res) {
         html += '<tr>';
         html += `<td>${v.id}</td>`;
         html += `<td>${v.writer}</td>`;

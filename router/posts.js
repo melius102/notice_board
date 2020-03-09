@@ -1,5 +1,6 @@
 const express = require("express");
 const dateTime = require('date-time');
+const path = require('path');
 const { pool, sqlAction } = require('../modules/mysql-conn');
 const { upload } = require('../modules/multer-conn');
 const { clog } = require('../modules/util');
@@ -17,10 +18,14 @@ router.get(["/", "/select"], async (req, res) => { // promise version
         let sql = 'SELECT * FROM posts ORDER BY id DESC';
         let sqlVals = [];
         const result = await sqlAction(pool, sql, sqlVals);
-        result[0] = result[0].map(v => {
+        // result[0] = result[0].map(v => { v.createdAt = dateTime({ date: v.createdAt }); return v; });
+        for (let v of result[0]) {
             v.createdAt = dateTime({ date: v.createdAt });
-            return v;
-        });
+            sql = 'SELECT * FROM files WHERE postid=?'; // get number of files
+            sqlVals = [v.id];
+            let files = await sqlAction(pool, sql, sqlVals);
+            v.filenum = files[0].length;
+        }
         // res.json(result[0]);
         res.render("posts.ejs", { res: result[0] });
     } catch (err) {
@@ -36,12 +41,25 @@ router.get("/select/:id", async (req, res) => {
         let sql = 'SELECT * FROM posts WHERE id=?';
         let sqlVals = [id];
         const result = await sqlAction(pool, sql, sqlVals);
-        result[0] = result[0].map(v => {
-            v.createdAt = dateTime({ date: v.createdAt });
-            return v;
-        });
+        let v = result[0][0]; // one data
+        v.createdAt = dateTime({ date: v.createdAt });
+        sql = 'SELECT * FROM files WHERE postid=?'; // get number of files
+        sqlVals = [v.id];
+        let filesData = await sqlAction(pool, sql, sqlVals);
+        let files = filesData[0];
+        v.filenum = files.length;
+        if (v.filenum > 0) {
+            let file = files[0];
+            v.fileId = file.id;
+            v.originalname = file.originalname;
+            let filenameArr = file.filename.split('-');
+            v.filepath = `/uploads/${filenameArr[0]}/${file.filename}`;
+            let img = ['.jpg', '.jpeg', '.gif', '.png'];
+            let ext = path.extname(file.filename).toLowerCase();
+            if (img.indexOf(ext) > -1) v.filetype = "img";
+        }
         // res.json(result[0]);
-        res.render("post.ejs", { res: result[0][0] });
+        res.render("post.ejs", { res: v });
     } catch (err) {
         clog(err);
         res.send(err);
@@ -88,7 +106,7 @@ router.get("/delete/:id", async (req, res) => {
 // upload.any()
 // upload.single(fieldname) : fieldname of formdata
 router.post("/", upload.single("upfile"), async (req, res) => {
-    var contentType = req.headers['content-type'].split(';')[0];
+    let contentType = req.headers['content-type'].split(';')[0];
     clog('contentType', contentType);
     let { writer, title, content } = req.body;
     let sql, sqlVals, result;
@@ -99,16 +117,18 @@ router.post("/", upload.single("upfile"), async (req, res) => {
         result = await sqlAction(pool, sql, sqlVals);
         if (contentType == 'application/x-www-form-urlencoded') { // formdata without enctype
         } else if (contentType == 'multipart/form-data') { // formdata with enctype='multipart/form-data'
-            // need to improve, insert and select must be performed simultaneously.
-            sql = 'SELECT id FROM posts ORDER BY id DESC LIMIT 1';
-            sqlVals = [];
-            result = await sqlAction(pool, sql, sqlVals);
-
             let file = req.file;
-            let postid = result[0][0].id
-            sql = 'INSERT INTO files SET postid=?, filename=?, originalname=?';
-            sqlVals = [postid, file.filename, file.originalname];
-            result = await sqlAction(pool, sql, sqlVals);
+            if (file) {
+                // need to improve, insert and select must be performed simultaneously.
+                sql = 'SELECT id FROM posts ORDER BY id DESC LIMIT 1';
+                sqlVals = [];
+                result = await sqlAction(pool, sql, sqlVals);
+                let postid = result[0][0].id
+
+                sql = 'INSERT INTO files SET postid=?, filename=?, originalname=?';
+                sqlVals = [postid, file.filename, file.originalname];
+                result = await sqlAction(pool, sql, sqlVals);
+            }
         }
         res.redirect('/posts');
     } catch (err) {
@@ -133,5 +153,18 @@ router.put("/", async (req, res) => {
 });
 
 // router.delete("/");
+
+// DOWNLOAD
+router.get("/download/:id", async (req, res) => {
+    let id = req.params.id;
+    let sql = "SELECT *  FROM files WHERE id=?";
+    let sqlVals = [id];
+    const result = await sqlAction(pool, sql, sqlVals);
+    let originalname = result[0][0].originalname;
+    let filename = result[0][0].filename;
+    let filenameArr = filename.split('-');
+    let filepath = path.join(__dirname, `../uploads/${filenameArr[0]}/${filename}`);
+    res.download(filepath, originalname);
+});
 
 module.exports = router;

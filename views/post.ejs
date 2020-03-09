@@ -9,6 +9,15 @@
     <div>writer: <%= res.writer %></div>
     <div>content: <%= res.content %></div>
     <div>createdAt: <%= res.createdAt %></div>
+    <% if(res.filetype == 'img') { %>
+    <div>
+        <a href='/posts/download/<%= res.fileId %>'><img src='<%= res.filepath %>'></a>
+    </div>
+    <% } else if (res.filepath) { %>
+    <div>
+        <a href='/posts/download/<%= res.fileId %>'><%= res.originalname %></a>
+    </div>
+    <% } %>
     <button onclick="postUpdate(<%= res.id %>)" ;>UPDATE</button>
     <button onclick="postDelete(<%= res.id %>)" ;>DELETE</button>
     <script>

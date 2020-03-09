@@ -9,13 +9,15 @@
             <td>id</td>
             <td>writer</td>
             <td>title</td>
+            <td>filenum</td>
             <td>createdAt</td>
         </tr>
-        <% for( v of res) { %>
+        <% for(let v of res) { %>
         <tr>
             <td><%= v.id %></td>
             <td><%= v.writer %></td>
             <td><a href="/posts/select/<%= v.id %>"><%= v.title %></a></td>
+            <td><%= v.filenum %></td>
             <td><%= v.createdAt %></td>
         </tr>
         <% } %>
