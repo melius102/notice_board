@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/post-api-header') %>
+    <form name="apiForm">
+        <input id="post-id" type="hidden" name="id">
+        <input type="text" name="writer" placeholder="writer">
+        <input type="text" name="title" placeholder="title">
+        <div>
+            <textarea name="content"></textarea>
+        </div>
+        <div>
+            <button onclick="return sendPost();">SEND</button>
+        </div>
+    </form>
+    <div id="root"></div>
+    <script src="/static/js/script-post-api.js"></script>
+</body>
+
+</html>

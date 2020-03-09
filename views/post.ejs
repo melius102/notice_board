@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/posts-header') %>
+    <div>id: <%= res.id %></div>
+    <div>title: <%= res.title %></div>
+    <div>writer: <%= res.writer %></div>
+    <div>content: <%= res.content %></div>
+    <div>createdAt: <%= res.createdAt %></div>
+    <button onclick="postUpdate(<%= res.id %>)" ;>UPDATE</button>
+    <button onclick="postDelete(<%= res.id %>)" ;>DELETE</button>
+    <script>
+        function postUpdate(id) {
+            location.href = `/posts/update/${id}`;
+        }
+
+        function postDelete(id) {
+            location.href = `/posts/delete/${id}`;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/posts-header') %>
+    <!-- method-override -->
+    <form name="insertForm" method="POST" action="/posts">
+        <input type="hidden" name="_method" value="POST">
+        <input type="text" name="writer" placeholder="writer">
+        <input type="text" name="title" placeholder="title">
+        <textarea name="content"></textarea>
+        <button onclick="return postInsert();">SUBMIT-INSERT</button>
+    </form>
+    <script>
+        function postInsert() {
+            var fm = document.insertForm;
+            if (fm.title.value == "") {
+                alert("fill the title.");
+                fm.title.focus();
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+
+</html>

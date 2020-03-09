@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/posts-header') %>
+    <!-- method-override -->
+    <form method="POST" action="/posts">
+        <input type="hidden" name="_method" value="PUT">
+        <input type="hidden" name="id" value='<%= res.id %>'>
+        <input type="text" name="writer" placeholder="writer" value='<%= res.writer %>'>
+        <input type="text" name="title" placeholder="title" value='<%= res.title %>'>
+        <textarea name="content"><%= res.content %></textarea>
+        <button>SUBMIT-UPDATE</button>
+    </form>
+</body>
+
+</html>
