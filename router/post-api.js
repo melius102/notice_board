@@ -42,9 +42,7 @@ router.get(['/api', '/api/:id'], async (req, res) => {
 
 // POST: CREATE
 router.post("/api", async (req, res) => {
-    let writer = req.body.writer;
-    let title = req.body.title;
-    let content = req.body.content;
+    let { writer, title, content } = req.body;
     let sql = 'INSERT INTO posts SET writer=?, title=?, content=?, createdAt=?';
     let sqlVals = [writer, title, content, new Date()];
     try {
@@ -58,11 +56,8 @@ router.post("/api", async (req, res) => {
 
 // PUT: UPDATE
 router.put("/api", async (req, res) => {
-    clog('put', req.body.id);
-    let id = req.body.id;
-    let writer = req.body.writer;
-    let title = req.body.title;
-    let content = req.body.content;
+    // clog('put', req.body.id);
+    let { id, writer, title, content } = req.body;
     let sql = "UPDATE posts SET writer=?, title=?, content=?, updatedAt=? WHERE id =?";
     let sqlVals = [writer, title, content, new Date(), id];
     try {
@@ -76,7 +71,6 @@ router.put("/api", async (req, res) => {
 
 // DELETE: DELETE
 router.delete("/api", async (req, res) => {
-    clog(req.body.id);
     let sql = "DELETE FROM posts WHERE id=?";
     let sqlVals = [req.body.id];
     try {

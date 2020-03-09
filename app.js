@@ -1,9 +1,20 @@
 const express = require('express');
 const path = require('path');
 const methodOverride = require('method-override');
+const dotenv = require('dotenv').config();
+const cookieParser = require('cookie-parser');
+const { pool } = require('./modules/mysql-conn');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const { clog, logClientIP } = require('./modules/util');
 
 // const Sequelize = require('sequelize');
+
+// routers
+const indexRouter = require('./router/index');
+const usersRouter = require("./router/users");
+const postsRouter = require("./router/posts");
+const postAPIRouter = require("./router/post-api");
 
 const app = express();
 const port = 3000;
@@ -15,6 +26,13 @@ app.set('views', path.join(__dirname, './views'));
 // middle ware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // ??
+app.use(cookieParser());
+app.use(session({
+    secret: process.env.salt, // salt used for encryption
+    resave: false, // forces the session to be saved back to the session store
+    saveUninitialized: false, // forces a session that is "uninitialized" to be saved to the store.
+    store: new MySQLStore({}, pool)
+}));
 app.use(logClientIP);
 app.use("/static", express.static(path.join(__dirname, './public')));
 app.use('/uploads', express.static(path.join(__dirname, './uploads')));
@@ -29,20 +47,9 @@ app.use(methodOverride((req, res) => {
     }
 }));
 
-// router
-const postsRouter = require(path.join(__dirname, "./router/posts"));
-const postAPIRouter = require(path.join(__dirname, "./router/post-api"));
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 app.use('/posts', postsRouter);
 app.use('/post-api', postAPIRouter);
-
-// route
-app.get("/", (req, res) => {
-    // res.send("<h1>Hello world</h1>"); // send is req's method of express' app
-    // res.json({ say: "hello" });
-    // res.sendFile(path.join(__dirname, "public/index.html")); // absolute path of file
-    // url must have '/'
-    let vals = { name: 'ejs' };
-    res.render("index.ejs", vals);
-});
 
 app.listen(port, () => clog(`http://192.168.0.64:${port}`));

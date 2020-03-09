@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/users-header') %>
+    <form name="signinForm" method="post" action="/users/signin">
+        <div><input type="text" name="email" placeholder="email"></div>
+        <div><input type="password" name="password"></div>
+        <div><button>signin</button></div>
+    </form>
+    <div><%= session %></div>
+    <div><%= session.email %></div>
+    <div><%= Boolean(session.email) %></div>
+</body>
+
+</html>

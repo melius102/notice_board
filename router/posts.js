@@ -156,12 +156,10 @@ router.put("/", async (req, res) => {
 
 // DOWNLOAD
 router.get("/download/:id", async (req, res) => {
-    let id = req.params.id;
     let sql = "SELECT *  FROM files WHERE id=?";
-    let sqlVals = [id];
+    let sqlVals = [req.params.id];
     const result = await sqlAction(pool, sql, sqlVals);
-    let originalname = result[0][0].originalname;
-    let filename = result[0][0].filename;
+    let { originalname, filename } = result[0][0];
     let filenameArr = filename.split('-');
     let filepath = path.join(__dirname, `../uploads/${filenameArr[0]}/${filename}`);
     res.download(filepath, originalname);

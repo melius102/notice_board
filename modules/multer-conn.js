@@ -11,7 +11,6 @@ const storage = multer.diskStorage({ destination, filename });
 
 // destination
 function destination(req, file, cb) {
-    clog('destination');
     cb(null, getPath());
 }
 

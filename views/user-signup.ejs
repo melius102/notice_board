@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('layout/head') %>
+
+<body>
+    <%- include('layout/users-header') %>
+    <form name="signupForm" method="post" action="/users/signup" onsubmit="return signup(this);">
+        <div><input type="text" name="email" placeholder="email"></div>
+        <div><input type="password" name="password"></div>
+        <div><input type="password" name="comfirm"></div>
+        <div>
+            <button>signup</button>
+            <button type="reset">reset</button>
+        </div>
+    </form>
+    <script>
+        function signup(fm) {
+            if (fm.email.value.trim() == "") return false;
+            if (fm.password.value.trim() == "") return false;
+            if (fm.comfirm.value.trim() == "") return false;
+            return true;
+        }
+    </script>
+</body>
+
+</html>

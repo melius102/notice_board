@@ -4,4 +4,11 @@ function logClientIP(req, res, next) {
     next();
 }
 
-module.exports = { clog, logClientIP };
+function alertLoc(msg, loc) {
+    return `<script>
+	alert("${msg}");
+	location.href="${loc}";
+	</script>`;
+}
+
+module.exports = { clog, logClientIP, alertLoc };
