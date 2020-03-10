@@ -10,7 +10,7 @@ const { clog, getURL, getPath, unLink } = require('../modules/util');
 const router = express.Router();
 
 // VIEW ALL
-router.get(["/", "/select"], async (req, res) => { // promise version
+router.get(["/", "/view"], async (req, res) => { // promise version
     try { // for asyn-await
         // let sql = 'INSERT INTO board SET title=?, writer=?, wdate=?';
         // let sql = "SELECT * FROM board WHERE id=" + id;
@@ -40,79 +40,51 @@ router.get(["/", "/select"], async (req, res) => { // promise version
     }
 });
 
-// VIEW ONE
-router.get("/select/:id", async (req, res) => {
+// VIEW ONE OR FORM
+router.get(["/send", "/send/:id", "/view/:id"], async (req, res) => {
     let id = req.params.id;
-    try {
-        let sql = 'SELECT * FROM posts WHERE id=?';
-        let sqlVals = [id];
-        const result = await pool.execute(sql, sqlVals);
-        let v = result[0][0]; // one data
-        v.createdAt = dateTime({ date: v.createdAt });
-        sql = 'SELECT * FROM files WHERE postid=?'; // get number of files
-        sqlVals = [v.id];
-        const subRed = await pool.execute(sql, sqlVals);
-        let files = subRed[0];
-        v.filenum = files.length;
+    let reqURL = req.url.split('/')[1];
+    if (id) { // VIEW ONE OR UPDATE FORM
+        try {
+            let sql = 'SELECT * FROM posts WHERE id=?';
+            let sqlVals = [id];
+            const result = await pool.execute(sql, sqlVals);
+            let v = result[0][0]; // one data
+            v.createdAt = dateTime({ date: v.createdAt });
+            sql = 'SELECT * FROM files WHERE postid=?'; // get number of files
+            sqlVals = [v.id];
+            const subRed = await pool.execute(sql, sqlVals);
+            let files = subRed[0];
+            v.filenum = files.length;
 
-        // file
-        if (v.filenum > 0) {
-            let file = files[0]; // first file
-            v.fileId = file.id;
-            v.originalname = file.originalname;
-            v.fileurl = getURL(file.filename);
+            // file
+            if (v.filenum > 0) {
+                let file = files[0]; // first file
+                v.fileId = file.id;
+                v.originalname = file.originalname;
+                v.fileurl = getURL(file.filename);
 
-            let img = ['.jpg', '.jpeg', '.gif', '.png'];
-            let ext = path.extname(file.filename).toLowerCase();
-            if (img.indexOf(ext) > -1) v.filetype = "img";
+                let img = ['.jpg', '.jpeg', '.gif', '.png'];
+                let ext = path.extname(file.filename).toLowerCase();
+                if (img.indexOf(ext) > -1) v.filetype = "img";
+            }
+
+            if (reqURL == 'view') { // VIEW ONE
+                res.render("post.ejs", { res: v });
+            } else if (reqURL == 'send') { // UPDATE FORM
+                v.method = 'PUT';
+                // res.json(result[0]);
+                res.render("post-send.ejs", { res: v });
+            }
+        } catch (err) {
+            clog(err);
+            res.send(err);
         }
-        // res.json(result[0]);
-        res.render("post.ejs", { res: v });
-    } catch (err) {
-        clog(err);
-        res.send(err);
+    } else { // CREATE FORM
+        let v = { id: '', writer: '', title: '', content: '', method: 'POST' };
+        res.render("post-send.ejs", { res: v });
     }
 });
-
-// VIEW CREATE
-router.get("/insert", async (req, res) => {
-    res.render("post-insert.ejs");
-});
-
-// VIEW UPDATE
-router.get("/update/:id", async (req, res) => {
-    let id = req.params.id;
-    try {
-        let sql = 'SELECT * FROM posts WHERE id=?';
-        let sqlVals = [id];
-        const result = await pool.execute(sql, sqlVals);
-        let v = result[0][0]; // one data
-        v.createdAt = dateTime({ date: v.createdAt });
-        sql = 'SELECT * FROM files WHERE postid=?'; // get number of files
-        sqlVals = [v.id];
-        const subRed = await pool.execute(sql, sqlVals);
-        let files = subRed[0];
-        v.filenum = files.length;
-
-        // file
-        if (v.filenum > 0) {
-            let file = files[0]; // first file
-            v.fileId = file.id;
-            v.originalname = file.originalname;
-            v.fileurl = getURL(file.filename);
-
-            let img = ['.jpg', '.jpeg', '.gif', '.png'];
-            let ext = path.extname(file.filename).toLowerCase();
-            if (img.indexOf(ext) > -1) v.filetype = "img";
-        }
-        // res.json(result[0]);
-        res.render("post-update.ejs", { res: v });
-    } catch (err) {
-        clog(err);
-        res.send(err);
-    }
-});
-
 
 // DELETE
 router.get("/delete/:id", async (req, res) => {
@@ -145,10 +117,22 @@ router.get("/delete/:id", async (req, res) => {
     }
 });
 
-// CREATE
+// add middleware for bodyparsing multipart/form-data
 // upload.any()
 // upload.single(fieldname) : fieldname of formdata
-router.post("/post", upload.single("upfile"), async (req, res) => {
+router.post('/', upload.single("upfile"), methodOverride((req, res) => {
+    clog('methodOverride', req.body);
+    if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+        // look in urlencoded POST bodies and delete it
+        let method = req.body._method
+        delete req.body._method
+        return method
+    }
+}), (req, res, next) => { next('route'); });
+
+// CREATE
+// router.post("/", upload.single("upfile"), async (req, res) => {
+router.post("/", async (req, res) => {
     clog('post', req.body);
     let contentType = req.headers['content-type'].split(';')[0];
     clog('contentType', contentType);
@@ -184,21 +168,9 @@ router.post("/post", upload.single("upfile"), async (req, res) => {
 });
 
 // UPDATE
-// router.all('/put', upload.single("upfile"), methodOverride((req, res, next) => {
-//     clog(req.body);
-//     if (req.body && typeof req.body === 'object' && '_method' in req.body) {
-//         // look in urlencoded POST bodies and delete it
-//         let method = req.body._method
-//         delete req.body._method
-//         return method
-//     }
-// }), (req, res, next) => {
-//     clog('all put');
-//     next('route');
-// });
-
-router.post("/put", upload.single("upfile"), async (req, res) => {
-    clog('put');
+// router.put("/", upload.single("upfile"), async (req, res) => {
+router.put("/", async (req, res) => {
+    clog('put', req.body, req.file);
     let { writer, title, content, id } = req.body;
     let sql, sqlVals, result;
     try {
