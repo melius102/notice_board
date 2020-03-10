@@ -5,14 +5,58 @@
 <body>
     <%- include('layout/posts-header') %>
     <!-- method-override -->
-    <form method="POST" action="/posts">
+    <form name="updateForm" method="POST" action="/posts/put" enctype='multipart/form-data'>
         <input type="hidden" name="_method" value="PUT">
         <input type="hidden" name="id" value='<%= res.id %>'>
         <input type="text" name="writer" placeholder="writer" value='<%= res.writer %>'>
         <input type="text" name="title" placeholder="title" value='<%= res.title %>'>
-        <textarea name="content"><%= res.content %></textarea>
-        <button>SUBMIT-UPDATE</button>
+        <div>
+            <textarea name="content"><%= res.content %></textarea>
+        </div>
+        <input type="file" name="upfile" />
+        <% if(res.filetype == 'img') { %>
+        <div>
+            <a href='/posts/download/<%= res.fileId %>'><img src='<%= res.fileurl %>'></a>
+            <button type="button" class="del-file" data-fileid="<%= res.fileId %>"
+                data-fileurl="<%= res.fileurl %>">DEL</button>
+        </div>
+        <% } else if (res.fileId) { %>
+        <div>
+            <a href='/posts/download/<%= res.fileId %>'><%= res.originalname %></a>
+            <button type="button" class="del-file" data-fileid="<%= res.fileId %>"
+                data-fileurl="<%= res.fileurl %>">DEL</button>
+        </div>
+        <% } %>
+        <div>
+            <button onclick="return postUpdate();">SUBMIT-UPDATE</button>
+            <button type="reset">RESET</button>
+        </div>
     </form>
+    <script>
+        function postUpdate() {
+            let fm = document.updateForm;
+            if (fm.title.value == "") {
+                alert("fill the title.");
+                fm.title.focus();
+                return false;
+            }
+            return true;
+        }
+        $(".del-file").click(function () {
+            if (confirm("do you want to delete file?")) {
+                let fileId = $(this).data("fileid");
+                let fileurl = $(this).data("fileurl");
+                console.log('fileId', fileId);
+                $.get(`/posts/remove?fileId=${fileId}&fileurl=${fileurl}`).then((res) => {
+                    if (res.code == 200) {
+                        $(this).parent().remove();
+                    } else {
+                        alert("fail to remove.");
+                    }
+                }).catch((xhr) => console.log(xhr));
+            }
+        });
+    </script>
 </body>
 
 </html>

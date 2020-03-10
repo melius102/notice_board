@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const methodOverride = require('method-override');
 const dotenv = require('dotenv').config();
+const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { pool } = require('./modules/mysql-conn');
 const session = require('express-session');
@@ -24,8 +25,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './views'));
 
 // middle ware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false })); // ??
+// parse application/json
+app.use(bodyParser.json());
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
     secret: process.env.salt, // salt used for encryption
@@ -38,6 +41,7 @@ app.use("/static", express.static(path.join(__dirname, './public')));
 app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 
 // for post method form data, not for ajax
+// not work with enctype='multipart/form-data' because req.body is empty
 app.use(methodOverride((req, res) => {
     if (req.body && typeof req.body === 'object' && '_method' in req.body) {
         // look in urlencoded POST bodies and delete it
@@ -46,6 +50,14 @@ app.use(methodOverride((req, res) => {
         return method
     }
 }));
+
+/*
+app.use(/^(?!\/user).+/, (req, res, next) => {
+	console.log("BASE: ", req.baseUrl);
+	if(req.session.email) next();
+	else res.redirect('/user/login');
+});
+*/
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

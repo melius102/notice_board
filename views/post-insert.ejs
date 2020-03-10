@@ -6,7 +6,7 @@
     <%- include('layout/posts-header') %>
     <!-- method-override -->
     <!-- enctype='multipart/form-data' : for file upload -->
-    <form name="insertForm" method="POST" action="/posts" enctype='multipart/form-data'>
+    <form name="insertForm" method="POST" action="/posts/post" enctype='multipart/form-data'>
         <input type="hidden" name="_method" value="POST">
         <input type="text" name="writer" placeholder="writer">
         <input type="text" name="title" placeholder="title">

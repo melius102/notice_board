@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const moment = require('moment');
 const { clog } = require('./util');
 
 // https://www.npmjs.com/package/multer
@@ -15,37 +16,22 @@ function destination(req, file, cb) {
 }
 
 function getPath() {
-    let newPath = path.join(__dirname, "../uploads/" + makePath());
-    if (!fs.existsSync(newPath)) fs.mkdirSync(newPath);
-    return newPath;
+    const uploadPath = path.join(__dirname, '../uploads/' + moment(new Date()).format('YYMMDD'));
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
+    return uploadPath;
 }
-
-function makePath() {
-    let d = new Date();
-    let year = d.getFullYear(); // 2020
-    let month = d.getMonth(); // 0 ~ 11
-    return String(year).substr(2) + zp(month + 1);
-}
-
-function zp(d) { return d < 10 ? "0" + d : d }
 
 // filename
 function filename(req, file, cb) {
-    cb(null, getFile(file.originalname).newFile);
+    cb(null, getFile(file.originalname));
     // file.fieldname, filename, originalname ...
 }
 
-function getFile(oriFile) {
-    let ext = path.extname(oriFile);
-    let name = path.basename(oriFile, ext);
-    let f1 = makePath();
-    let f2 = Date.now();
-    let f3 = Math.floor(Math.random() * 90) + 10; // 10 ~ 99
-    return {
-        newFile: f1 + '-' + f2 + '-' + f3 + ext,
-        newExt: ext,
-        newName: f1 + '-' + f2 + '-' + f3
-    };
+function getFile(originalname) {
+    let ext = path.extname(originalname);
+    let name = path.basename(originalname, ext);
+    let rnd = Math.floor(Math.random() * 90) + 10; // 10 ~ 99
+    return moment(new Date()).format('YYMMDD') + '-' + Date.now() + '-' + rnd + ext;
 }
 
 /////////
@@ -53,7 +39,7 @@ function getFile(oriFile) {
 const upload = multer({ storage, fileFilter });
 
 function fileFilter(req, file, cb) {
-    let allowExt = ['.jpg', '.jpeg', '.gif', '.png', '.zip', '.txt', '.pdf'];
+    let allowExt = ['.jpg', '.jpeg', '.gif', '.png', '.zip', '.txt', '.pdf', '.hwp'];
     let ext = path.extname(file.originalname).toLocaleLowerCase();
     if (allowExt.indexOf(ext) > -1) {
         req.fileUploadChk = true;

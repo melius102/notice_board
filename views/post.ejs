@@ -11,9 +11,9 @@
     <div>createdAt: <%= res.createdAt %></div>
     <% if(res.filetype == 'img') { %>
     <div>
-        <a href='/posts/download/<%= res.fileId %>'><img src='<%= res.filepath %>'></a>
+        <a href='/posts/download/<%= res.fileId %>'><img src='<%= res.fileurl %>'></a>
     </div>
-    <% } else if (res.filepath) { %>
+    <% } else if (res.fileId) { %>
     <div>
         <a href='/posts/download/<%= res.fileId %>'><%= res.originalname %></a>
     </div>
